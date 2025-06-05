@@ -18,17 +18,51 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { loginUser } from "@/lib/auth";
+import { useRouter } from "next/navigation";
+import { refreshToken } from "@/lib/token";
 
 export default function LoginPage() {
   const [cnic, setCnic] = useState("")
   const [password, setPassword] = useState("")
   const [termsAgreed, setTermsAgreed] = useState(false)
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Handle login logic here
-    console.log("Login attempt with:", { cnic, password })
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+   try {
+    const response = await fetch("http://localhost:8000/api/token/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        cnic: cnic,
+        password: password,
+      }),   
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      localStorage.setItem("accessToken", data.access);
+      localStorage.setItem("refreshToken", data.refresh);
+      alert("Login successful!");
+      router.push("/dashboard"); // or wherever you want to redirect
+    } else {
+      const errorData = await response.json();
+      console.error("Login failed:", errorData);
+      alert("Invalid CNIC or password.");
+    }
+  } catch (error) {
+    console.error("Error submitting form:", error);
+    alert("Network or server error.");
+  } finally {
+    setLoading(false);
   }
+};
 
   return (
     <div className="container flex h-screen max-w-screen-xl flex-col items-center justify-center px-4 md:px-6">
@@ -201,8 +235,12 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <Button type="submit" className="bg-teal-600 hover:bg-teal-700" disabled={!termsAgreed}>
-                Sign In
+              <Button
+                type="submit"
+                className="bg-teal-600 hover:bg-teal-700"
+                disabled={!termsAgreed || loading}
+              >
+                {loading ? "Signing in..." : "Sign In"}
               </Button>
             </div>
           </form>

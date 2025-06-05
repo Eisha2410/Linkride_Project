@@ -7,14 +7,31 @@ from drivers.models import DriverProfile
 from passengers.models import PassengerProfile
 from drivers.serializers import DriverProfileSerializer
 from passengers.serializers import PassengerProfileSerializer
+from .models import User
+from rest_framework.permissions import AllowAny
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from rest_framework.authentication import BasicAuthentication
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import CustomTokenObtainPairSerializer
 
+
+@method_decorator(csrf_exempt, name='dispatch')
 class UserRegistrationView(APIView):
+    authentication_classes = [BasicAuthentication]
+    permission_classes = [AllowAny]
+
     def post(self, request):
+        print("REGISTER HIT")
         serializer = UserRegistrationSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            return Response({"message": "User registered successfully"}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'token': str(refresh.access_token),
+            'refresh': str(refresh),
+        }, status=status.HTTP_201_CREATED)
 
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
@@ -39,3 +56,6 @@ class UserProfileView(APIView):
             return Response({'error': 'Invalid role'}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.data)
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer

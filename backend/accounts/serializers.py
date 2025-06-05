@@ -35,3 +35,25 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             PassengerProfile.objects.get_or_create(user=user)
 
         return user
+
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth import authenticate
+from rest_framework import serializers
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    username_field = 'cnic'
+
+    def validate(self, attrs):
+        authenticate_kwargs = {
+            'username': attrs['cnic'],
+            'password': attrs['password'],
+        }
+
+        user = authenticate(**authenticate_kwargs)
+
+        if not user:
+            raise serializers.ValidationError('Invalid CNIC or password')
+
+        data = super().validate(attrs)
+        data['cnic'] = user.cnic
+        return data

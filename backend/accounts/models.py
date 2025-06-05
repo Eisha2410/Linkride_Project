@@ -38,7 +38,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'cnic'
-    REQUIRED_FIELDS = ['phone_number', 'full_name']
+    REQUIRED_FIELDS = []
 
     def __str__(self):
         return f"{self.full_name} ({self.role})"

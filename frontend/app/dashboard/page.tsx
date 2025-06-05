@@ -8,6 +8,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { RideCard } from "@/components/ride-card"
 import { DashboardNav } from "@/components/dashboard-nav"
 import { Bell, Calendar, Car, MessageSquare } from "lucide-react"
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+
+const router = useRouter();
+
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  if (!token) router.push("/login");
+}, []);
 
 // Mock data for demonstration
 const recommendedRides = [
