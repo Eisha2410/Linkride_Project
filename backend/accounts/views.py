@@ -15,23 +15,21 @@ from rest_framework.authentication import BasicAuthentication
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import CustomTokenObtainPairSerializer
 
-
-@method_decorator(csrf_exempt, name='dispatch')
 class UserRegistrationView(APIView):
-    authentication_classes = [BasicAuthentication]
     permission_classes = [AllowAny]
 
     def post(self, request):
         print("REGISTER HIT")
         serializer = UserRegistrationSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-
-        refresh = RefreshToken.for_user(user)
-        return Response({
-            'token': str(refresh.access_token),
-            'refresh': str(refresh),
-        }, status=status.HTTP_201_CREATED)
+        if serializer.is_valid():
+            user = serializer.save()
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'access': str(refresh.access_token),
+                'refresh': str(refresh)
+            }, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]

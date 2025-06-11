@@ -28,11 +28,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user.save()
 
         if user.role == 'driver':
-            from drivers.models import DriverProfile
-            DriverProfile.objects.get_or_create(user=user) 
+            DriverProfile.objects.create(user=user)
         elif user.role == 'passenger':
-            from passengers.models import PassengerProfile
-            PassengerProfile.objects.get_or_create(user=user)
+            PassengerProfile.objects.create(user=user)
 
         return user
 
