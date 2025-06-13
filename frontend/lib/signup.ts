@@ -7,8 +7,11 @@ export async function registerUser(userData: {
   // Include other necessary fields
 }) {
   try {
-    const response = await apiFetch("/api/signup/", {
+    const response = await apiFetch("/api/accounts/register/", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(userData),
     });
     if (!response.ok) {
