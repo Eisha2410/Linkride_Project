@@ -27,7 +27,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 /*                                 Typings                                    */
 /* -------------------------------------------------------------------------- */
 
-type Role = 'rider' | 'driver'
+type Role = 'passenger' | 'driver'
 
 interface FormState {
   fullName: string
@@ -56,7 +56,7 @@ export default function SignupPage() {
     cnic: '',
     email: '',
     password: '',
-    role: 'rider',
+    role: 'passenger',
     organization: '',
     department: '',
     cellNumber: '',
@@ -111,12 +111,18 @@ export default function SignupPage() {
     }
 
     try {
-      const res    = await fetch('http://127.0.0.1:8000/api/register/', { method: 'POST', body: data })
+      const res    = await fetch('http://127.0.0.1:8000/api/accounts/register/', { 
+                            method: 'POST',
+                            body: data,
+                            headers: {
+                              'Accept': 'application/json'  // Optional, encourages JSON response
+                            }
+                          })
+
       const result = await res.json()
 
       if (res.ok) {
         alert('Account created successfully!')
-        // TODO: router.push('/login')
       } else {
         console.error('Signup failed:', result)
         alert('Signup error: ' + JSON.stringify(result))
@@ -210,8 +216,8 @@ export default function SignupPage() {
               className="flex gap-4"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="rider" id="rider" />
-                <Label htmlFor="rider">Rider</Label>
+                <RadioGroupItem value="passenger" id="passenger" />
+                <Label htmlFor="passenger">Passenger</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="driver" id="driver" />
@@ -275,7 +281,7 @@ export default function SignupPage() {
           </div>
 
           {/* Rider-only toggle */}
-          {formData.role === 'rider' && (
+          {formData.role === 'passenger' && (
             <div className="flex items-start space-x-2">
               <Checkbox
                 id="shareContact"

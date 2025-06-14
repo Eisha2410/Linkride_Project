@@ -9,18 +9,25 @@ from drivers.serializers import DriverProfileSerializer
 from passengers.serializers import PassengerProfileSerializer
 from .models import User
 from rest_framework.permissions import AllowAny
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
 from rest_framework.authentication import BasicAuthentication
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import CustomTokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
+@method_decorator(csrf_exempt, name='dispatch')
 class UserRegistrationView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
         print("REGISTER HIT")
-        serializer = UserRegistrationSerializer(data=request.data)
+        print("HEADERS:", request.headers)
+        print("AUTH:", request.auth)
+        print("USER:", request.user)
+        print("DATA:", request.data)
+
+        serializer = UserRegistrationSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             user = serializer.save()
             refresh = RefreshToken.for_user(user)
@@ -32,7 +39,7 @@ class UserRegistrationView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserProfileView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         user = request.user

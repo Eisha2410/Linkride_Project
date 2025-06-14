@@ -8,7 +8,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['cnic', 'phone_number', 'full_name', 'role', 'education', 'password']
+        fields = [
+            'cnic', 'phone_number', 'full_name', 'role',
+            'password', 'email', 'organization', 'department', 'whatsapp_number', 'share_contact'
+        ]
     
 
     def validate_cnic(self, value):
@@ -27,10 +30,24 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
 
+        request_data = self.context['request'].data
+
         if user.role == 'driver':
-            DriverProfile.objects.create(user=user)
+            vehicle_model = self.context['request'].data.get('vehicle_model')
+            vehicle_number = self.context['request'].data.get('vehicle_number')
+            vehicle_image = self.context['request'].data.get('vehicle_image')
+
+            if not hasattr(user, 'driverprofile'):
+                driver_profile = DriverProfile.objects.create(user=user)
+                Vehicle.objects.create(
+                    driver=driver_profile,
+                    model=vehicle_model,
+                    number=vehicle_number,
+                    image=vehicle_image
+                )
         elif user.role == 'passenger':
-            PassengerProfile.objects.create(user=user)
+            if not hasattr(user, 'passengerprofile'):
+                PassengerProfile.objects.create(user=user)
 
         return user
 

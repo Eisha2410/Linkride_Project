@@ -17,5 +17,6 @@ def sync_passenger_profile(sender, instance, **kwargs):
             profile.cnic = instance.cnic
             profile.phone_number = instance.phone_number
             profile.full_name = instance.full_name
-            profile.education = instance.education
+            profile.organization = instance.organization
+            profile.department = instance.department
             profile.save()

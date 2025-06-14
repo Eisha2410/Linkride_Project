@@ -8,6 +8,8 @@ class PassengerProfile(models.Model):
     full_name = models.CharField(max_length=100, blank=True, null=True)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
     emergency_contact = models.CharField(max_length=15, blank=True, null=True)
+    organization = models.CharField(max_length=100, blank=True, null=True)
+    department = models.CharField(max_length=100, blank=True, null=True)
     
     def __str__(self):
         return self.user.full_name

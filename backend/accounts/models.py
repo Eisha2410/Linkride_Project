@@ -30,7 +30,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     cnic = models.CharField(max_length=15, unique=True, null=False, blank=False)
     phone_number = models.CharField(max_length=15, unique=True, null=False, blank=False)
     full_name = models.CharField(max_length=100, null=False, blank=False)
-    education = models.CharField(max_length=100, null=False, blank=False)
+    email = models.EmailField(unique=True, null=True, blank=False)
+    organization = models.CharField(max_length=100, null=True, blank=False)
+    department = models.CharField(max_length=100, null=True, blank=False)
+    whatsapp_number = models.CharField(max_length=100, null=True, blank=False)
+    share_contact = models.BooleanField(max_length=100, null=True, blank=False)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

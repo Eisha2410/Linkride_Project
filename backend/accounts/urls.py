@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserRegistrationView
+from accounts.views import UserRegistrationView
 from .views import UserProfileView
 from accounts.views import CustomTokenObtainPairView
 
