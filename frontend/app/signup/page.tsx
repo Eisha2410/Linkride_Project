@@ -6,6 +6,8 @@ import React, {
   FormEvent,
 } from 'react'
 
+import { useRouter } from 'next/navigation';
+
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -49,8 +51,8 @@ interface FormState {
 /* -------------------------------------------------------------------------- */
 /*                             Component                                      */
 /* -------------------------------------------------------------------------- */
-
 export default function SignupPage() {
+  const router = useRouter()
   const [formData, setFormData] = useState<FormState>({
     fullName: '',
     cnic: '',
@@ -122,7 +124,12 @@ export default function SignupPage() {
       const result = await res.json()
 
       if (res.ok) {
-        alert('Account created successfully!')
+        localStorage.setItem("userRole", result.role);
+        localStorage.setItem("userName", result.full_name);
+        localStorage.setItem("token", result.token || result.access); // in case you're using auth later
+
+        alert('Account created successfully!');
+        router.push('/dashboard');
       } else {
         console.error('Signup failed:', result)
         alert('Signup error: ' + JSON.stringify(result))

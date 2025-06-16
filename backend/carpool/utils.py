@@ -17,6 +17,8 @@ def get_distance_km(origin, destination):
     response = requests.get(base_url, params=params)
     data = response.json()
 
+    print("GOOGLE MAPS RESPONSE:", data)
+
     try:
         distance_text = data['rows'][0]['elements'][0]['distance']['text']  # e.g., "12.3 km"
         distance_km = float(distance_text.replace(" km", "").replace(",", ""))

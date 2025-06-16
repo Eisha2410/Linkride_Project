@@ -42,39 +42,51 @@ export default function PostRidePage() {
     setFormData((prev) => ({ ...prev, isRecurring: checked }))
   }
 
-  // Calculate fare when pickup and dropoff locations change
-  useEffect(() => {
-    if (formData.pickup && formData.dropoff) {
-      // In a real app, this would call a mapping API to get the distance
-      // For demo purposes, we'll simulate a distance calculation
-      const simulatedDistance = Math.random() * 20 + 5 // Random distance between 5-25 km
-      setDistance(Number.parseFloat(simulatedDistance.toFixed(1)))
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-      // Calculate fare based on distance
-      // Base fare: 50 PKR + 15 PKR per km
-      const calculatedFare = 50 + simulatedDistance * 15
-      setEstimatedFare(Math.round(calculatedFare))
-
-      // Driver gets 80% of the fare
-      const earnings = calculatedFare * 0.8
-      setDriverEarnings(Math.round(earnings))
-
-      // App commission is 20%
-      const commission = calculatedFare * 0.2
-      setAppCommission(Math.round(commission))
-    } else {
-      setEstimatedFare(null)
-      setDriverEarnings(null)
-      setAppCommission(null)
-      setDistance(null)
-    }
-  }, [formData.pickup, formData.dropoff])
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Handle form submission logic here
-    console.log("Posting ride with:", formData)
+  const accessToken = localStorage.getItem("accessToken");
+  if (!accessToken) {
+    alert("You are not logged in. Please log in to post a ride.");
+    return;
   }
+
+  const ridePayload = {
+    origin: formData.pickup,
+    destination: formData.dropoff,
+    date: formData.date,
+    time: formData.timeFrom,  // assuming you're using timeFrom
+    seats_available: parseInt(formData.seats),
+    is_recurring: formData.isRecurring,
+  };
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/api/rides/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`
+      },
+      body: JSON.stringify(ridePayload),
+    });
+
+    if (response.ok) {
+      const rideData = await response.json();
+      setDistance(rideData.distance || 0);
+      setEstimatedFare(rideData.fare || 0);
+      setDriverEarnings((rideData.fare || 0) * 0.85);
+      alert("Ride posted successfully!");
+    } else {
+      const errorData = await response.json();
+      console.error("Ride post failed:", errorData);
+      alert("Failed to post ride. Please make sure all fields are correct.");
+    }
+  } catch (error) {
+    console.error("Error posting ride:", error);
+    alert("An error occurred while posting the ride.");
+  }
+};
+
 
   // Format time for display
   const formatTimeForDisplay = (timeString: string) => {

@@ -8,15 +8,21 @@ from django.contrib.auth.models import User
 # - Sending form data to create/update rides
 # Fields like 'driver', 'check-in/check-out' are read-only
 class RideSerializer(serializers.ModelSerializer):
+    driver_name = serializers.CharField(source='driver.full_name', read_only=True)
+    driver_phone = serializers.CharField(source='driver.phone_number', read_only=True)
+    organization = serializers.CharField(source='driver.organization', read_only=True)
+
     class Meta:
         model = Ride
-        fields =  '__all__'
-        read_only_fields = ['driver', 'vehicle']  
-    
+        fields = '__all__'  
+        read_only_fields = ['driver', 'vehicle']
     
     def validate(self, data):
-        request = self.context['request']
-        user = request.user
+        request = self.context.get['request']
+        user = getattr(request, 'user', None)
+
+        if not user or not user.is_authenticated:
+            raise serializers.ValidationError("You must be logged in to post a ride.")
 
         if user.role != 'driver':
             raise serializers.ValidationError("Only drivers can create rides.")
@@ -24,7 +30,7 @@ class RideSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Driver must have a registered vehicle.")
         
         return data
-
+    
 # FRONTEND:
 # Used for:
 # - User registration form (signup page)

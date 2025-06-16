@@ -22,21 +22,11 @@ class UserRegistrationView(APIView):
 
     def post(self, request):
         print("REGISTER HIT")
-        print("HEADERS:", request.headers)
-        print("AUTH:", request.auth)
-        print("USER:", request.user)
-        print("DATA:", request.data)
-
         serializer = UserRegistrationSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             user = serializer.save()
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                'access': str(refresh.access_token),
-                'refresh': str(refresh)
-            }, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "User registered successfully."}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserProfileView(APIView):
     permission_classes = [AllowAny]

@@ -1,5 +1,4 @@
 "use client"
-
 import type React from "react"
 
 import { useState, useEffect } from "react"
@@ -13,52 +12,6 @@ import { Calendar, Search, MapPin, DollarSign, Info } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { ScrollableTimePicker } from "@/components/scrollable-time-picker"
 
-// Mock data for demonstration
-const availableRides = [
-  {
-    id: 1,
-    driver: "John Doe",
-    pickup: "University Main Gate",
-    dropoff: "Downtown Station",
-    date: "2025-05-15",
-    time: "08:30 AM",
-    seats: 3,
-    distance: 12.5, // in kilometers
-    fare: 250, // in PKR
-    cellNumber: "+92 300 1234567",
-    whatsappNumber: "+92 300 7654321",
-    showContact: true,
-  },
-  {
-    id: 2,
-    driver: "Jane Smith",
-    pickup: "Tech Park",
-    dropoff: "Central Library",
-    date: "2025-05-16",
-    time: "09:00 AM",
-    seats: 2,
-    distance: 8.3,
-    fare: 180,
-    cellNumber: "+92 301 2345678",
-    whatsappNumber: "+92 301 2345678",
-    showContact: true,
-  },
-  {
-    id: 3,
-    driver: "Michael Brown",
-    pickup: "North Campus",
-    dropoff: "South Mall",
-    date: "2025-05-17",
-    time: "05:30 PM",
-    seats: 4,
-    distance: 15.7,
-    fare: 320,
-    cellNumber: "+92 302 3456789",
-    whatsappNumber: "+92 302 3456789",
-    showContact: true,
-  },
-]
-
 export default function FindRidePage() {
   const [searchParams, setSearchParams] = useState({
     pickup: "",
@@ -70,21 +23,17 @@ export default function FindRidePage() {
 
   const [estimatedFare, setEstimatedFare] = useState<number | null>(null)
   const [distance, setDistance] = useState<number | null>(null)
+  const [availableRides, setAvailableRides] = useState<any[]>([])
 
   const handleChange = (name: string, value: string) => {
     setSearchParams((prev) => ({ ...prev, [name]: value }))
   }
 
-  // Calculate fare when pickup and dropoff locations change
   useEffect(() => {
     if (searchParams.pickup && searchParams.dropoff) {
-      // In a real app, this would call a mapping API to get the distance
-      // For demo purposes, we'll simulate a distance calculation
-      const simulatedDistance = Math.random() * 20 + 5 // Random distance between 5-25 km
+      const simulatedDistance = Math.random() * 20 + 5 
       setDistance(Number.parseFloat(simulatedDistance.toFixed(1)))
 
-      // Calculate fare based on distance
-      // Base fare: 50 PKR + 15 PKR per km
       const calculatedFare = 50 + simulatedDistance * 15
       setEstimatedFare(Math.round(calculatedFare))
     } else {
@@ -93,12 +42,36 @@ export default function FindRidePage() {
     }
   }, [searchParams.pickup, searchParams.dropoff])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Handle search logic here
-    console.log("Searching with:", searchParams)
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
 
+  const query = new URLSearchParams({
+    pickup: searchParams.pickup,
+    dropoff: searchParams.dropoff,
+    date: searchParams.date,
+    time: searchParams.time,
+    organization: searchParams.organization,
+  })
+
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/api/rides/?${query}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch rides")
+    }
+
+    const data = await response.json()
+    console.log("Fetched rides:", data)
+    setAvailableRides(data)
+  } catch (error) {
+    console.error("Search error:", error)
+  }
+}
   return (
     <div className="flex min-h-screen">
       <DashboardNav />

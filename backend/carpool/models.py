@@ -4,6 +4,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from drivers.models import Vehicle
+from accounts.models import User 
+from .utils import get_distance_km  
+from django.core.exceptions import ValidationError
 
 User = get_user_model()
 
@@ -51,6 +54,24 @@ class Ride(models.Model):
     # Estimated ride distance (in kilometers)
     # Used in fare calculation
     distance_km = models.FloatField(default=0)
+
+    def save(self, *args, **kwargs):
+        if self.origin and self.destination:
+            try:
+                print(f"Calculating distance between: {self.origin} -> {self.destination}")
+                self.distance_km = get_distance_km(self.origin, self.destination)
+                print(f"Distance: {self.distance_km} km")
+
+                # Inline fare calculation logic
+                base_fare = 50  # PKR
+                per_km_rate = 30  # PKR/km
+                self.fare = base_fare + (self.distance_km * per_km_rate)
+                print(f"Fare calculated: {self.fare} PKR")
+
+            except Exception as e:
+                print("Error calculating distance/fare:", e)
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.origin} to {self.destination} by {self.driver}"

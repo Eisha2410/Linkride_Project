@@ -1,73 +1,87 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { RideCard } from "@/components/ride-card"
-import { DashboardNav } from "@/components/dashboard-nav"
-import { Bell, Calendar, Car, MessageSquare } from "lucide-react"
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-
-const router = useRouter();
-
-useEffect(() => {
-  const token = localStorage.getItem("token");
-  if (!token) router.push("/login");
-}, []);
-
-// Mock data for demonstration
-const recommendedRides = [
-  {
-    id: 1,
-    driver: "John Doe",
-    pickup: "University Main Gate",
-    dropoff: "Downtown Station",
-    date: "2025-05-15",
-    time: "08:30 AM",
-    seats: 3,
-    distance: 12.5,
-    fare: 250,
-  },
-  {
-    id: 2,
-    driver: "Jane Smith",
-    pickup: "Tech Park",
-    dropoff: "Central Library",
-    date: "2025-05-16",
-    time: "09:00 AM",
-    seats: 2,
-    distance: 8.3,
-    fare: 180,
-  },
-]
-
-const myRides = [
-  {
-    id: 3,
-    driver: "You",
-    pickup: "North Campus",
-    dropoff: "South Mall",
-    date: "2025-05-17",
-    time: "05:30 PM",
-    seats: 4,
-    status: "active",
-    distance: 15.7,
-    fare: 320,
-  },
-]
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RideCard } from "@/components/ride-card";
+import { DashboardNav } from "@/components/dashboard-nav";
+import { Bell, Calendar, Car, MessageSquare } from "lucide-react";
 
 export default function DashboardPage() {
-  const [user] = useState({
-    name: "Alex Johnson",
-    role: "rider", // or "driver"
-    cellNumber: "+92 300 1234567",
-    whatsappNumber: "+92 300 1234567",
-    shareContact: true,
-  })
+  const router = useRouter();
+
+  const [user, setUser] = useState({
+    name: "",
+    role: "", // "rider" or "driver"
+    cellNumber: "",
+    whatsappNumber: "",
+    shareContact: false,
+  });
+
+  useEffect(() => {
+    const role = localStorage.getItem("userRole");
+    const name = localStorage.getItem("userName");
+
+    console.log("🚀 Loaded from localStorage:", { role, name });
+
+    if (!role || !name) {
+      router.push("/");
+    } else {
+      setUser((prev) => ({
+        ...prev,
+        role,
+        name,
+      }));
+    }
+  }, []);
+
+  // Optional: show loading while fetching user data
+  if (!user.name || !user.role) {
+    return <div className="p-6 text-gray-500">Loading dashboard...</div>;
+  }
+
+  const recommendedRides = [
+    {
+      id: 1,
+      driver: "John Doe",
+      pickup: "University Main Gate",
+      dropoff: "Downtown Station",
+      date: "2025-05-15",
+      time: "08:30 AM",
+      seats: 3,
+      distance: 12.5,
+      fare: 250,
+    },
+    {
+      id: 2,
+      driver: "Jane Smith",
+      pickup: "Tech Park",
+      dropoff: "Central Library",
+      date: "2025-05-16",
+      time: "09:00 AM",
+      seats: 2,
+      distance: 8.3,
+      fare: 180,
+    },
+  ];
+
+  const myRides = [
+    {
+      id: 3,
+      driver: "You",
+      pickup: "North Campus",
+      dropoff: "South Mall",
+      date: "2025-05-17",
+      time: "05:30 PM",
+      seats: 4,
+      status: "active",
+      distance: 15.7,
+      fare: 320,
+    },
+  ];
 
   return (
     <div className="flex min-h-screen">
@@ -224,5 +238,5 @@ export default function DashboardPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

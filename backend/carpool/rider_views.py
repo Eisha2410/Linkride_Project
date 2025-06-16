@@ -4,7 +4,6 @@ from .forms import RideForm
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied, ValidationError
-from rest_framework.authentication import TokenAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
@@ -13,6 +12,9 @@ from .serializers import RideSerializer
 from .utils import get_distance_km
 from drivers.models import Vehicle
 from rest_framework.decorators import action
+from django.conf import settings
+from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 def ride_list(request):
     rides = Ride.objects.all().order_by('-date', '-time')
@@ -33,7 +35,7 @@ def create_ride(request):
 class RideListCreateAPIView(generics.ListCreateAPIView):
     queryset = Ride.objects.all()
     serializer_class = RideSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def perform_create(self, serializer):
         origin = self.request.data.get('origin')
@@ -45,7 +47,7 @@ class RideListCreateAPIView(generics.ListCreateAPIView):
 class RideRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Ride.objects.all()
     serializer_class = RideSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def perform_update(self, serializer):
         if self.get_object().driver != self.request.user:
@@ -60,11 +62,15 @@ class RideRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
 class RideViewSet(viewsets.ModelViewSet):
     serializer_class = RideSerializer
     queryset = Ride.objects.all()
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
+        print("USER:", self.request.user)
+        print("IS AUTH:", self.request.user.is_authenticated)
         user = self.request.user
+        print("🚨 USER FROM JWT:", user)
+        print("🚨 USER ROLE:", user.role)
 
         if user.role != 'driver':
             raise PermissionDenied("Only drivers can create rides.")
@@ -77,10 +83,26 @@ class RideViewSet(viewsets.ModelViewSet):
         serializer.save(driver=user, vehicle=vehicle)
 
     def get_queryset(self):
-        user = self.request.user
-        if user.role == 'driver':
-            return Ride.objects.filter(driver=user)
-        return Ride.objects.all()
+        queryset = Ride.objects.all()
+        request = self.request
+        pickup = request.query_params.get("pickup")
+        dropoff = request.query_params.get("dropoff")
+        date = request.query_params.get("date")
+        time = request.query_params.get("time")
+        organization = request.query_params.get("organization")
+
+        if pickup:
+            queryset = queryset.filter(origin__icontains=pickup)
+        if dropoff:
+            queryset = queryset.filter(destination__icontains=dropoff)
+        if date:
+            queryset = queryset.filter(date=date)
+        if time:
+            queryset = queryset.filter(time=time)
+        if organization:
+            queryset = queryset.filter(driver__organization__icontains=organization)
+
+        return queryset
     
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def checkin(self, request, pk=None):
@@ -133,3 +155,22 @@ class JoinRideView(APIView):
         ride.seats_available -= 1
         ride.save()
         return Response({"message": "Successfully joined the ride."}, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])  
+def estimate_fare_view(request):
+    origin = request.data.get('origin')
+    destination = request.data.get('destination')
+
+    if not origin or not destination:
+        return Response({'error': 'Origin and destination are required.'}, status=400)
+
+    try:
+        distance_km = get_distance_km(origin, destination)
+        fare = round(distance_km * settings.PER_KM_RATE, 2)
+        return Response({
+            'distance': round(distance_km, 2),
+            'fare': fare
+        }, status=200)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)

@@ -50,7 +50,7 @@ export default function LoginPage() {
       localStorage.setItem("accessToken", data.access);
       localStorage.setItem("refreshToken", data.refresh);
       alert("Login successful!");
-      router.push("/dashboard"); // or wherever you want to redirect
+      router.push('/dashboard'); // or wherever you want to redirect
     } else {
       const errorData = await response.json();
       console.error("Login failed:", errorData);

@@ -7,6 +7,7 @@ from .rider_views import (
 )
 from rest_framework.routers import DefaultRouter
 from .user_views import RegisterUserAPIView
+from .rider_views import estimate_fare_view
 
 # Optional: ViewSet for admin or advanced frontend use
 router = DefaultRouter()
@@ -27,5 +28,7 @@ urlpatterns = router.urls + [
 
     # Join a ride
     path('rides/<int:ride_id>/join/', JoinRideView.as_view(), name='join-ride'),
+
+    path('estimate_fare/', estimate_fare_view, name='estimate_fare'),
 
 ]
