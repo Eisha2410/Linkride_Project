@@ -18,7 +18,9 @@ class RideSerializer(serializers.ModelSerializer):
         read_only_fields = ['driver', 'vehicle']
     
     def validate(self, data):
-        request = self.context.get['request']
+        request = self.context.get('request')
+        print("⚠️ Validation called. Data received:", data)
+        return data
         user = getattr(request, 'user', None)
 
         if not user or not user.is_authenticated:
@@ -26,8 +28,8 @@ class RideSerializer(serializers.ModelSerializer):
 
         if user.role != 'driver':
             raise serializers.ValidationError("Only drivers can create rides.")
-        if not user.driverprofile.vehicle_set.exists():
-            raise serializers.ValidationError("Driver must have a registered vehicle.")
+        #if not user.driverprofile.vehicle_set.exists():
+        #    raise serializers.ValidationError("Driver must have a registered vehicle.")
         
         return data
     

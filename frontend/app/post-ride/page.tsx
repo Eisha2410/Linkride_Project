@@ -65,8 +65,9 @@ export default function PostRidePage() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`
+        Authorization: `Bearer ${accessToken}`,
       },
+      credentials: "include", 
       body: JSON.stringify(ridePayload),
     });
 
@@ -85,6 +86,22 @@ export default function PostRidePage() {
     console.error("Error posting ride:", error);
     alert("An error occurred while posting the ride.");
   }
+
+  function getCookie(name: string) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === name + "=") {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
 };
 
 

@@ -2,7 +2,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Ride
 from .forms import RideForm
 from rest_framework import viewsets, generics, permissions, status
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -15,6 +14,8 @@ from rest_framework.decorators import action
 from django.conf import settings
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from drivers.models import DriverProfile
 
 def ride_list(request):
     rides = Ride.objects.all().order_by('-date', '-time')
@@ -60,27 +61,40 @@ class RideRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
         instance.delete()
 
 class RideViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticatedOrReadOnly]
     serializer_class = RideSerializer
     queryset = Ride.objects.all()
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        print("USER:", self.request.user)
-        print("IS AUTH:", self.request.user.is_authenticated)
         user = self.request.user
-        print("🚨 USER FROM JWT:", user)
-        print("🚨 USER ROLE:", user.role)
+        print("🔍 Logged in user:", user)
+        print("🔍 Is authenticated:", user.is_authenticated)
+        print("🔍 Role:", user.role)
+        print("🔍 Has driverprofile:", hasattr(user, "driverprofile"))
 
         if user.role != 'driver':
-            raise PermissionDenied("Only drivers can create rides.")
+            raise PermissionDenied("Only drivers can post rides.")
 
         try:
-            vehicle = Vehicle.objects.get(driver=user)
-        except Vehicle.DoesNotExist:
-            raise ValidationError("You must have a registered vehicle to create a ride.")
+            driver_profile = user.driverprofile
+        except DriverProfile.DoesNotExist:
+            raise ValidationError("Driver profile not found.")
 
-        serializer.save(driver=user, vehicle=vehicle)
+        try:
+            vehicle = driver_profile.vehicle
+        except Vehicle.DoesNotExist:
+            raise ValidationError("Driver vehicle not found.")
+
+        origin = self.request.data.get("origin")
+        destination = self.request.data.get("destination")
+        if not origin or not destination:
+            raise ValidationError("Origin and destination are required.")
+
+        distance_km = get_distance_km(origin, destination)
+        fare = calculate_fare(distance_km)
+
+        serializer.save(driver=user, fare=fare)
+
 
     def get_queryset(self):
         queryset = Ride.objects.all()
@@ -104,7 +118,7 @@ class RideViewSet(viewsets.ModelViewSet):
 
         return queryset
     
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['post'], permission_classes=[AllowAny])
     def checkin(self, request, pk=None):
         ride = self.get_object()
 
@@ -118,7 +132,7 @@ class RideViewSet(viewsets.ModelViewSet):
         ride.save()
         return Response({'success': 'Checked in successfully', 'check_in_time': ride.check_in_time})
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['post'], permission_classes=[AllowAny])
     def checkout(self, request, pk=None):
         ride = self.get_object()
 
@@ -134,7 +148,7 @@ class RideViewSet(viewsets.ModelViewSet):
         ride.save()
         return Response({'success': 'Checked out successfully', 'check_out_time': ride.check_out_time})
 class JoinRideView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request, ride_id):
         try:
