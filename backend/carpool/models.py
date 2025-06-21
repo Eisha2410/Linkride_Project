@@ -63,8 +63,8 @@ class Ride(models.Model):
                 print(f"Distance: {self.distance_km} km")
 
                 # Inline fare calculation logic
-                base_fare = 50  # PKR
-                per_km_rate = 30  # PKR/km
+                base_fare = 50  
+                per_km_rate = 30  
                 self.fare = base_fare + (self.distance_km * per_km_rate)
                 print(f"Fare calculated: {self.fare} PKR")
 

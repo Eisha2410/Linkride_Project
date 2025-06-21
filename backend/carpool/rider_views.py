@@ -90,10 +90,7 @@ class RideViewSet(viewsets.ModelViewSet):
         if not origin or not destination:
             raise ValidationError("Origin and destination are required.")
 
-        distance_km = get_distance_km(origin, destination)
-        fare = calculate_fare(distance_km)
-
-        serializer.save(driver=user, fare=fare)
+        serializer.save(driver=user)
 
 
     def get_queryset(self):
