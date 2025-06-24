@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import User
 from drivers.models import DriverProfile
 from passengers.models import PassengerProfile
+from drivers.models import Vehicle
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
